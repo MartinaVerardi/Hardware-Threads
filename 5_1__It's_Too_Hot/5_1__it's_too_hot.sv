@@ -82,8 +82,7 @@ design where there is no datapath - only a FSM to encode the whole system.
 */
 
 module nibbleFider (
-    input logic in,
-
+    input logic clk, reset_l, in,
     output logic valid
 );
 
@@ -96,34 +95,49 @@ typedef enum logic [2:0] {
         S5 = 3'b101
         } stateList;
 
-stateList state, nextState;
+stateList state;
 
-int countBit = 0;
+logic [4:0] shiftRegister;  // Stores 5-bit nibble
+int countOnes; 
 
-// FSM
-// Sequential block for state transitions
-always_ff @(posedge clk, negedge reset_l) begin : st_machine
-
-    if (~reset_l) state <= S0;
-    else state <= nextState;
-    
+// FSM: Handles state transitions
+always_ff @(posedge clk, negedge reset_l) begin
+    if (~reset_l) begin
+        state <= S0;
+        countOnes <= 0;
+        shiftRegister <= 5'b00000;
+    end else begin
+        case (state)
+            S0: state <= S1;
+            S1: state <= S2;
+            S2: state <= S3;
+            S3: state <= S4;
+            S4: state <= S5;
+            S5: state <= S0; // Reset to process next nibble
+            default: state <= S0;
+        endcase
+    end
 end
 
-// Combinational block for next state logic
+// Data Path: Shifting input bits and counting 1s
+always_ff @(posedge clk, negedge reset_l) begin
+    if (~reset_l) begin
+        shiftRegister <= 5'b00000;
+        countOnes <= 0;
+    end else begin
+        shiftRegister <= {shiftRegister[3:0], in};  // Shift in new bit
+        if (in) countOnes <= countOnes + 1;
+        if (state == S0) countOnes <= (in) ? 1 : 0;  // Reset countOnes at new nibble
+    end
+end
+
+// Check if the 5-bit sequence is valid
 always_comb begin
-
-    if (state < 5) nextState = countBit;
-    else nextState = S0;
-
-    countBit ++;
-
-end
-
-// Data Path
-always_ff @(posedge clk, negedge reset_l) begin : findNibble
-    
-    if(~reset_l)
-
+    case (shiftRegister)
+        5'b00011, 5'b00101, 5'b00110, 5'b01010, 5'b01100, 
+        5'b01001, 5'b11000, 5'b10100, 5'b10010, 5'b10001: valid = (state == S5);
+        default: valid = 0;
+    endcase
 end
 
 endmodule
