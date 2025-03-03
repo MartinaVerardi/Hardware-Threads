@@ -1,4 +1,4 @@
-# FindMax Hardware Thread - SystemVerilog Implementation
+# FindMax Hardware Thread
 
 ## Overview
 
@@ -19,13 +19,7 @@ The FSM follows three states:
     (B, done=0) -- start=1 --> (B, done=0)
     (B, done=0) -- start=0 --> (C, done=1)
     (C, done=1) -- automatic --> (A, done=0)
-
-## State Descriptions
-
-- **A (Idle, `done=0`)**: Waiting for `start=1`  
-- **B (Finding Max, `done=0`)**: Updating `maxValue` while `start=1`  
-- **C (Done, `done=1`)**: Holds max value for one cycle, then returns to A  
-
+```
 ---
 
 ## 🏗 FSM (Finite State Machine)
