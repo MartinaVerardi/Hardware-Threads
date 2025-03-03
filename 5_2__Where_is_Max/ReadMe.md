@@ -6,7 +6,7 @@ This module is designed to find the **maximum unsigned number** from a sequence 
 
 ## State Diagram
 
-The FSM follows three states:  
+The FSM follows three states (Moore Machine):  
 
 - **A (Idle, `done=0`)**: Waiting for `start=1`  
 - **B (Finding Max, `done=0`)**: Updating `maxValue` while `start=1`  
