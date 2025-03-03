@@ -28,3 +28,69 @@ presented in this chapter. Draw the DataPath; label control and status points. A
 SystemVerilog Code for this. Then write a testbench that sends several sequences of values to the thread.
 
 */
+
+module findMax(
+input logic start,
+input logic [7:0] inputA,
+input logic clk, rst
+
+ouput logic done,
+output logic [7:0] maxValue
+);
+
+typedef enum logic [1:0] {
+    Idle = 3'b00,
+    FindingMax = 3'b01,
+    Done = 3'b10
+    } stateList;
+
+
+stateList state;
+
+logic [7:0] MaxReg = 0;
+
+// FSM: Handles state transitions
+always_ff @(posedge clk, negedge rst) begin
+    if (~rst) begin
+        state <= Idle;
+        done <= 0;
+        MaxReg <= 0;
+    end else begin
+        case (state)
+            Idle: begin
+                if (start) begin
+                    state <= FindingMax;
+                    done <= 0; // don't assert done until processing is done
+                end
+            end
+            FindingMax: begin
+                if (~start) begin
+                    state <= Done;
+                    done <= 1; // assert done when done processing
+                end
+            end
+            Done: begin
+                state <= Idle; // back to Idle after one clock cycle
+                done <= 0; // reset done
+            end
+            default: state <= Idle;
+        endcase
+    end
+end
+
+// Data Path: Find Max Value
+always_ff @(posedge clk, negedge rst) begin
+    if (~rst) begin
+        maxValue <= 0;
+        MaxReg <= 0;
+    end else begin
+        if (start) begin // Only process when start is asserted
+            if (inputA > MaxReg) begin
+                MaxReg <= inputA; // Update MaxReg with new input
+            end
+        end
+        maxValue <= MaxReg; // Output the max value
+    end
+end
+
+endmodule
