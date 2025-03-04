@@ -22,40 +22,46 @@ The FSM follows three states (Moore Machine):
 ```
 ---
 
-## 🏗 FSM (Finite State Machine)
+## FSM Components
 
-The FSM controls when to start processing, when to update the max value, and when to assert `done`.
+- **State Register (Flip-Flop)**: Stores the current state (A, B, or C).
+- **Next-State Logic (Combinational Logic)**: Determines state transitions based on the `start` signal.
 
-### **FSM Components**
-- **State Register (Flip-Flop)** → Stores the **current state** (`A`, `B`, `C`).  
-- **Next-State Logic (Combinational Logic)** → Determines state transitions based on `start`.  
-- **Control Signals**:  
-  - `loadMax` → Enables updating the max value.  
-  - `done` → Asserted in **state C** for one cycle.  
+### Control Signals:
+- **done**: Asserted in state C for one clock cycle to indicate the process is complete and the `maxValue` has been calculated.
 
-### **FSM State Transitions**
+### FSM Logic:
+- In state **A (Idle)**, the system waits for the `start` signal to be asserted. Once `start` is asserted, the state transitions to **B (Finding Max)**.
+- In state **B (Finding Max)**, the system compares the input (`inputA`) to the current `maxValue` and updates `maxValue` if the new value is greater.
+- In state **C (Done)**, the system asserts the `done` signal for one clock cycle, indicating that the max value has been calculated. The system then returns to **A (Idle)** after the `done` signal is de-asserted.
 
-| Current State | `start = 0` | `start = 1` |
-|--------------|------------|------------|
-| **A (Idle, `done=0`)** | Stay in A  | Go to B  |
-| **B (Finding Max, `done=0`)** | Go to C  | Stay in B  |
-| **C (Done, `done=1`)** | Go to A (automatically) | Go to A (automatically) |
+## Datapath (Max Value Calculation)
 
----
+The datapath is responsible for calculating and updating the maximum value based on the incoming inputs.
 
-## 📊 Datapath (Max Value Calculation)
+### Datapath Components
+- **Flip-Flop (MaxReg)**: Stores the current max value.
+- **Comparator (>)**: Compares `inputA` with `MaxReg` to determine if the input is greater than the current max value.
+- **Control Signal (start)**: Determines when to update the max value.
+- **Multiplexer (MUX)**: Selects between updating or keeping `MaxReg`, depending on the comparison result.
 
-The **datapath processes and updates the maximum value**.
+### Datapath Logic:
+- On reset, `maxValue` is initialized to 0.
+- In state **B (Finding Max)**, the datapath compares `inputA` with the current `MaxReg`:
+  - If `inputA` is greater than `MaxReg`, the value of `MaxReg` is updated to `inputA`.
+  - If `inputA` is not greater than `MaxReg`, `MaxReg` remains unchanged.
+- When the `start` signal is de-asserted (i.e., processing is complete), the system moves to state **C (Done)**, and the `done` signal is asserted for one clock cycle to indicate that the process is finished.
 
-### **Datapath Components**
-- **Flip-Flop (`MaxReg`)** → Stores the current max value.  
-- **Comparator (`>`)** → Compares `inputA` with `maxValue`.  
-- **Multiplexer (`MUX`)** → Selects between updating or keeping `maxValue`.  
-- **Control Signal (`loadMax`)** → Comes from FSM to enable updates.  
+### Data Path Diagram
 
-### **Datapath Logic**
-1. **On reset**, `maxValue = 0`.  
-2. **In state B**, compare `inputA` with `maxValue`:  
-   - If `inputA > maxValue`, update `maxValue`.  
-   - Else, keep the old value.  
-3. **When `start = 0`**, FSM moves to **C**, and `done` is asserted.  
+```plaintext
+  +-----------+      +-----------+      +-------------+
+  |           |      |           |      |             |
+  |   inputA  | ---> | Comparator | ---> | MaxReg (FF) |
+  |           |      |           |      |             |
+  +-----------+      +-----------+      +-------------+
+        |                                |
+        |    (If inputA > MaxReg)       |
+        |--------------------------------|
+        |            MaxReg Update      |
+        +--------------------------------+
