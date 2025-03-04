@@ -30,6 +30,10 @@ The FSM follows three states (Moore Machine):
 ### Control Signals:
 - **done**: Asserted in state C for one clock cycle to indicate the process is complete and the `maxValue` has been calculated.
 
+### Signal Diagram
+![WhatsApp Image 2025-03-03 at 19 56 45_d977af5e](https://github.com/user-attachments/assets/2b71087c-a641-4861-afee-49c57adbb7fa)
+
+
 ### FSM Logic:
 - In state **A (Idle)**, the system waits for the `start` signal to be asserted. Once `start` is asserted, the state transitions to **B (Finding Max)**.
 - In state **B (Finding Max)**, the system compares the input (`inputA`) to the current `maxValue` and updates `maxValue` if the new value is greater.
